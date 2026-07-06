@@ -1,11 +1,9 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Перемещение персонажа и рывок (dash) для twin-stick roguelite.
-/// Отвечает за: чтение WASD, движение через физику, рывок с кадрами неуязвимости (i-frames).
-/// Поворот спрайта к курсору вынесен в отдельный скрипт PlayerAim.
+/// Управляет передвижением игрового персонажа с использованием новой системы ввода (Input System).
+/// Реализует обычное перемещение и механику рывка (dash) с кадрами неуязвимости (i-frames).
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
@@ -17,155 +15,246 @@ public class PlayerMovement : MonoBehaviour
     [Header("Движение")]
     [Tooltip("Скорость ходьбы, units/сек")]
     [SerializeField]
-    private float moveSpeed = 6f;
+    private float _moveSpeed = 6f;
 
     /// <summary>
-    /// Как быстро персонаж набирает скорость. 
-    /// Большое значение = мгновенно, маленькое = медленно.
+    /// Ускорение персонажа (как быстро он достигает максимальной скорости). 
+    /// Большое значение обеспечивает мгновенный разгон, низкое — эффект "скольжения".
     /// </summary>
     [Tooltip("Как быстро набирает скорость. Большое значение = мгновенно, маленькое = 'скользко'")]
     [SerializeField]
-    private float acceleration = 90f;
+    private float _acceleration = 90f;
 
     /// <summary>
-    /// Как быстро персонаж теряет скорость при отпускании клавиш. 
-    /// Большое значение = мгновенно, маленькое = медленно.
+    /// Торможение персонажа (как быстро он останавливается при отпускании кнопок перемещения). 
+    /// Большое значение обеспечивает мгновенную остановку, низкое — инерционное скольжение.
     /// </summary>
     [Tooltip("Как быстро скорость гасится при отпускании клавиш")]
     [SerializeField]
-    private float deceleration = 120f;
+    private float _deceleration = 120f;
 
     /// <summary>
-    /// Cкорость рывка персонажа в юнитах в секунду.
+    /// Скорость персонажа во время рывка в юнитах в секунду.
     /// </summary>
     [Header("Рывок")]
     [Tooltip("Скорость рывка, units/сек")]
     [SerializeField]
-    private float dashSpeed = 22f;
+    private float _dashSpeed = 22f;
 
     /// <summary>
-    /// Длительность рывка в секундах. Дистанция рывка = dashSpeed * dashDuration.
+    /// Длительность рывка в секундах. Общая дистанция рывка рассчитывается как <see cref="_dashSpeed"/> * <see cref="_dashDuration"/>.
     /// </summary>
     [Tooltip("Длительность рывка, сек. Дистанция рывка = dashSpeed * dashDuration")]
     [SerializeField]
-    private float dashDuration = 0.15f;
+    private float _dashDuration = 0.15f;
 
     /// <summary>
-    /// Перезфрядка: время от начала рывка до следующего, сек.
+    /// Время перезарядки (cooldown): интервал в секундах от начала одного рывка до возможности использовать следующий.
     /// </summary>
-    [Tooltip("Перезфрядка: время от начала рывка до следующего, сек")]
+    [Tooltip("Перезарядка: время от начала рывка до следующего, сек")]
     [SerializeField]
-    private float dashCooldown = 0.6f;
+    private float _dashCooldown = 0.6f;
 
     /// <summary>
-    /// Длительность неуязвимости (i-frames) после начала рывка, сек.
+    /// Длительность кадров неуязвимости (i-frames) после начала рывка в секундах.
+    /// Обычно устанавливается чуть больше, чем сама длительность рывка.
     /// </summary>
     [Tooltip("Длительность неуязвимости. Обычно чуть больше dashDuration")]
     [SerializeField]
-    private float iFrameDuration = 0.18f;
+    private float _iFrameDuration = 0.18f;
     #endregion
 
-    private Rigidbody2D rb;
-
     /// <summary>
-    /// Cгенерированный класс из .inputactions
+    /// Компонент твёрдого тела для управления физикой перемещения.
     /// </summary>
-    private InputSystem_Actions controls;
+    private Rigidbody2D _rigidbody;
 
     /// <summary>
-    /// Текущий ввод WASD (нормализованный)
+    /// Экземпляр сгенерированного класса для работы с новой системой ввода.
     /// </summary>
-    private Vector2 moveInput;
+    private InputSystem_Actions _controls;
 
     /// <summary>
-    /// Куда персонаж двигался в прошлый кадр. 
-    /// Используется для рывка, чтобы персонаж рывком продолжал двигаться в том же направлении, 
-    /// даже если игрок отпустил клавиши.
+    /// Текущий нормализованный вектор ввода направления (WASD/стики).
     /// </summary>
-    private Vector2 lastMoveDirection = Vector2.right;
+    private Vector2 _moveInput;
 
     /// <summary>
-    /// Состояние персонажа: обычное или рывок.
+    /// Направление последнего сделанного шага. 
+    /// Используется для того, чтобы персонаж делал рывок в ту же сторону, куда шел,
+    /// даже если игрок уже отпустил клавиши движения.
+    /// </summary>
+    private Vector2 _lastMoveDirection = Vector2.right;
+
+    /// <summary>
+    /// Возможные состояния перемещения персонажа.
     /// </summary>
     private enum State
     {
+        /// <summary>Обычное движение, контролируемое вводом игрока.</summary>
         Normal,
+        /// <summary>Выполнение рывка.</summary>
         Dashing
     }
 
-    private State state = State.Normal;
+    /// <summary>
+    /// Текущее состояние перемещения персонажа.
+    /// </summary>
+    private State _state = State.Normal;
 
     /// <summary>
-    /// Cколько ещё длится текущий рывок
+    /// Время, оставшееся до окончания текущего рывка.
     /// </summary>
-    private float dashTimeLeft;
+    private float _dashTimeLeft;
 
     /// <summary>
-    /// Cколько ещё осталось до следующего рывка (перезарядка)
+    /// Время, оставшееся до завершения перезарядки (cooldown), после которой можно начать новый рывок.
     /// </summary>
-    private float dashCooldownLeft;
+    private float _dashCooldownLeft;
 
     /// <summary>
-    /// Cколько ещё длится текущая неуязвимость (i-frames)
+    /// Время, оставшееся до окончания текущего периода неуязвимости (i-frames).
     /// </summary>
-    private float iFrameTimeLeft;
+    private float _iFrameTimeLeft;
 
     /// <summary>
-    /// Направление рывка, фиксируется на старте.
+    /// Направление, в котором совершается текущий рывок. Фиксируется при его старте.
     /// </summary>
-    private Vector2 dashDirection;
+    private Vector2 _dashDirection;
 
     /// <summary>
-    /// Для системы урона: 
-    /// true = персонаж в данный момент неуязвим (i-frames), 
-    /// false = урон наносится.
+    /// Флаг проверки на неуязвимость персонажа.
+    /// Если true — урон должен игнорироваться, если false — урон наносится обычным образом.
     /// </summary>
-    private bool IsInvulnerable => iFrameTimeLeft > 0f;
+    private bool _isInvulnerable => _iFrameTimeLeft > 0f;
 
+    /// <summary>
+    /// Инициализация компонентов при загрузке скрипта.
+    /// </summary>
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        controls = new InputSystem_Actions();
+        _rigidbody = GetComponent<Rigidbody2D>();
+        _controls = new InputSystem_Actions();
     }
 
+    /// <summary>
+    /// Активация ввода и подписка на события при включении объекта.
+    /// </summary>
     private void OnEnable()
     {
-        controls.Player.Enable();
+        _controls.Player.Enable();
 
         // Подписка на событие нажатия кнопки рывка.
         // Указывает явно, что действие выполнено (performed), а не начато (started) или отменено (canceled).
-        controls.Player.Dash.performed += OnDashPressed;
+        _controls.Player.Dash.performed += OnDashPressed;
     }
 
+    /// <summary>
+    /// Отключение ввода и отписка от событий при выключении объекта.
+    /// </summary>
     private void OnDisable()
     {
-        controls.Player.Dash.performed -= OnDashPressed;
-        controls.Player.Disable();
+        _controls.Player.Dash.performed -= OnDashPressed;
+        _controls.Player.Disable();
     }
 
-    // Ввод читаем в Update (каждый кадр отрисовки) — так не пропускаем нажатия.
+    /// <summary>
+    /// Считывание пользовательского ввода каждый кадр для предотвращения пропуска нажатий клавиш.
+    /// </summary>
     private void Update()
     {
-        moveInput = controls.Player.Move.ReadValue<Vector2>();
+        _moveInput = _controls.Player.Move.ReadValue<Vector2>();
         
-        if(moveInput.sqrMagnitude > 1f)
+        // Ограничиваем длину вектора до 1, чтобы передвижение по диагонали не было быстрее.
+        if(_moveInput.sqrMagnitude > 1f)
         {
-            // Ограничиваем длину вектора до 1, чтобы диагонали не были быстрее.
-            moveInput.Normalize(); 
+            _moveInput.Normalize(); 
         }
 
         // Запоминаем последнее направление движения, если персонаж реально двигается.
-        // Предотвращает запоминание нулевого вектора, когда игрок отпустил клавиши
-        // или стик геймпада немного двигается около нуля.
-        if (moveInput.sqrMagnitude > 0.01f)
+        // Это предотвращает запись нулевого вектора при отпускании клавиш.
+        if (_moveInput.sqrMagnitude > 0.01f)
         {
-            // Запоминаем последнее направление движения
-            lastMoveDirection = moveInput; 
+            _lastMoveDirection = _moveInput; 
         }       
     }
 
+    /// <summary>
+    /// Применение передвижения и управление таймерами на шаге физического движка.
+    /// </summary>
+    private void FixedUpdate()
+    {
+        var deltaTime = Time.fixedDeltaTime;
+
+        if (_dashCooldownLeft > 0f)
+            _dashCooldownLeft -= deltaTime;
+
+        if(_iFrameTimeLeft > 0f)
+            _iFrameTimeLeft -= deltaTime;
+
+        switch (_state)
+        {
+            case State.Normal:
+                MoveNormal(deltaTime);
+                break;
+            case State.Dashing:
+                TickDash(deltaTime); 
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Применяет расчет движения игрока в нормальном состоянии с учетом ускорения и торможения.
+    /// </summary>
+    /// <param name="deltaTime">Прошедшее с последнего физического обновления время в секундах.</param>
+    private void MoveNormal(float deltaTime)
+    {
+        var target = _moveInput * _moveSpeed;
+
+        // При наличии ввода разгоняемся, при отпускании — тормозим.
+        var rate = (_moveInput.sqrMagnitude > 0.01f) ? _acceleration : _deceleration;
+        _rigidbody.linearVelocity = Vector2.MoveTowards(_rigidbody.linearVelocity, target, rate * deltaTime);
+    }
+
+    /// <summary>
+    /// Обработчик события совершения рывка (Dash) из Input System. Проверяет возможность выполнения рывка.
+    /// </summary>
+    /// <param name="context">Контекст события пользовательского ввода.</param>
     private void OnDashPressed(InputAction.CallbackContext context)
     {
-        throw new NotImplementedException();
+        // Нельзя сделать еще один рывок во время текущего рывка или до окончания перезарядки
+        if (_state != State.Normal || _dashCooldownLeft > 0f)
+            return; 
+
+        StartDash();
+    }
+
+    /// <summary>
+    /// Инициализация и запуск состояния рывка: расчет направления, установка таймеров и начального импульса.
+    /// </summary>
+    private void StartDash()
+    {
+        // Направление задается по текущему вводу. Если ввода нет (игрок стоит) — по направлению последнего шага.
+        _dashDirection = (_moveInput.sqrMagnitude > 0.01f) ? _moveInput : _lastMoveDirection;
+        _state = State.Dashing;
+        _dashTimeLeft = _dashDuration;
+        _dashCooldownLeft = _dashCooldown;
+        _iFrameTimeLeft = _iFrameDuration;
+        _rigidbody.linearVelocity = _dashDirection * _dashSpeed;
+    }
+
+    /// <summary>
+    /// Обновление логики во время состояния рывка: поддержание постоянной скорости и выход из состояния.
+    /// </summary>
+    /// <param name="deltaTime">Прошедшее с последнего физического обновления время в секундах.</param>
+    private void TickDash(float deltaTime)
+    {
+        _dashTimeLeft -= deltaTime;
+
+        // Постоянное поддержание скорости рывка дает предсказуемую и стабильную пройденную дистанцию
+        _rigidbody.linearVelocity = _dashDirection * _dashSpeed;
+
+        if(_dashTimeLeft <= 0f)
+            _state = State.Normal; // Возврат в обычное состояние после окончания времени рывка
     }
 }
