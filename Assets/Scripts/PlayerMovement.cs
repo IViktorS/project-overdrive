@@ -15,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Движение")]
     [Tooltip("Скорость ходьбы, units/сек")]
     [SerializeField]
-    private float _moveSpeed = 11f;
+    private float _moveSpeed = 12f;
 
     /// <summary>
     /// Ускорение персонажа (как быстро он достигает максимальной скорости). 
