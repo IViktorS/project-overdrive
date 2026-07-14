@@ -314,6 +314,7 @@ GameObject:
   - component: {fileID: 154743623}
   - component: {fileID: 154743625}
   - component: {fileID: 154743624}
+  - component: {fileID: 154743626}
   m_Layer: 0
   m_Name: Dummy (1)
   m_TagString: Untagged
@@ -410,6 +411,19 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &154743626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 154743622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6917d725a333b844eb63bfb57541c860, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Dummy
+  _maxHealth: 100
 --- !u!1 &197014501
 GameObject:
   m_ObjectHideFlags: 0
@@ -563,6 +577,7 @@ GameObject:
   - component: {fileID: 474638480}
   - component: {fileID: 474638481}
   - component: {fileID: 474638482}
+  - component: {fileID: 474638483}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -695,6 +710,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AimIndicator
   _playerAim: {fileID: 474638481}
   _indicator: {fileID: 91539386}
+--- !u!114 &474638483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 474638476}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c88588dffaff7d429e39a6dd0405815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GuitarWeapon
+  _wavePrefab: {fileID: 8464092615101156609, guid: 9f944fdeb0f93944295ca08ac9195a8e, type: 3}
+  _playerAim: {fileID: 474638481}
+  _muzzle: {fileID: 0}
+  _baseStats:
+    damage: 25
+    distanceFalloff: 0
+    visualWidth: 0.8
+    length: 8
+    speed: 14
+    contourAmplitude: 0
+    pierceCount: 0
+    pierceFalloff: 0.3
+  _fireCooldown: 0.25
+  _inputBuffer: 0.1
 --- !u!1 &716288915
 GameObject:
   m_ObjectHideFlags: 0
@@ -1770,6 +1811,7 @@ GameObject:
   - component: {fileID: 1566696847}
   - component: {fileID: 1566696849}
   - component: {fileID: 1566696848}
+  - component: {fileID: 1566696850}
   m_Layer: 0
   m_Name: Dummy (2)
   m_TagString: Untagged
@@ -1866,6 +1908,19 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &1566696850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1566696846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6917d725a333b844eb63bfb57541c860, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Dummy
+  _maxHealth: 100
 --- !u!1 &1669051913
 GameObject:
   m_ObjectHideFlags: 0
@@ -2408,6 +2463,7 @@ GameObject:
   - component: {fileID: 2024697567}
   - component: {fileID: 2024697569}
   - component: {fileID: 2024697568}
+  - component: {fileID: 2024697570}
   m_Layer: 0
   m_Name: Dummy
   m_TagString: Untagged
@@ -2504,6 +2560,19 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &2024697570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2024697566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6917d725a333b844eb63bfb57541c860, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Dummy
+  _maxHealth: 100
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

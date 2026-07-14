@@ -35,7 +35,7 @@ public class Dummy : MonoBehaviour
 
         Debug.Log($"{name}: -{damage:F0} → HP {_health:F0}");
 
-        if (_health < 0f)
+        if (_health <= 0f)
             _health = _maxHealth;
     }
 }
