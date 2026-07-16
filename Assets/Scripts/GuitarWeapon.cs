@@ -54,6 +54,12 @@ public class GuitarWeapon : MonoBehaviour
     [Tooltip("Насколько заранее засчитывается клик (сек)")]
     [SerializeField]
     private float _inputBuffer = 0.1f;
+
+    /// <summary>
+    /// Звуковой эффект выстрела. Воспроизводится случайный звук из набора.
+    /// </summary>
+    [SerializeField]
+    private RandomSound _shotSound;
     #endregion
 
     /// <summary>
@@ -142,6 +148,9 @@ public class GuitarWeapon : MonoBehaviour
         _nextFireTime = Time.time + _fireCooldown;
         _lastPressTime = -999f; // сброс буфера
 
-        // Сюда позже ляжет game feel: отдача, вспышка, звук выстрела, гильза-медиатор.
+        if(_shotSound != null)
+            _shotSound.Play();
+
+        // Сюда позже ляжет game feel: отдача, вспышка, гильза-медиатор.
     }
 }
