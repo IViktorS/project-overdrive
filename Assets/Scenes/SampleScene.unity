@@ -429,7 +429,7 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 22486677}
   _flashDuration: 0.05
   _hitStopDuration: 0.04
-  _hitSound: {fileID: 0}
+  _hitSound: {fileID: 154743627}
 --- !u!114 &154743627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -860,7 +860,10 @@ MonoBehaviour:
     pierceFalloff: 0.3
   _fireCooldown: 0.25
   _inputBuffer: 0.1
-  _shotSound: {fileID: 0}
+  _shotSound: {fileID: 474638484}
+  _visual: {fileID: 1853746411}
+  _recoilDistance: 0.15
+  _recoilRecovery: 0.08
 --- !u!114 &474638484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2211,7 +2214,7 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 1828321866}
   _flashDuration: 0.05
   _hitStopDuration: 0.04
-  _hitSound: {fileID: 0}
+  _hitSound: {fileID: 1566696851}
 --- !u!114 &1566696851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2985,7 +2988,7 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 716288917}
   _flashDuration: 0.05
   _hitStopDuration: 0.04
-  _hitSound: {fileID: 0}
+  _hitSound: {fileID: 2024697571}
 --- !u!114 &2024697571
 MonoBehaviour:
   m_ObjectHideFlags: 0

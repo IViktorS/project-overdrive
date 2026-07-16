@@ -60,6 +60,28 @@ public class GuitarWeapon : MonoBehaviour
     /// </summary>
     [SerializeField]
     private RandomSound _shotSound;
+
+    [Header("Визуальная отдача")]
+    /// <summary>
+    /// Спрайт игрока, который дёргается при выстреле (дочерний Visual)
+    /// </summary>
+    [Tooltip("Спрайт игрока, который дёргается при выстреле (дочерний Visual)")]
+    [SerializeField]
+    private Transform _visual;
+
+    /// <summary>
+    /// Сила отдачи (смещение спрайта игрока)
+    /// </summary>
+    [Tooltip("Сила отдачи (смещение спрайта игрока)")]
+    [SerializeField]
+    private float _recoilDistance = 0.15f;
+
+    /// <summary>
+    /// Скорость возврата спрайта игрока в исходное положение, сек
+    /// </summary>
+    [Tooltip("Скорость возврата спрайта игрока в исходное положение, сек")]
+    [SerializeField]
+    private float _recoilRecovery = 0.08f;
     #endregion
 
     /// <summary>
@@ -71,6 +93,11 @@ public class GuitarWeapon : MonoBehaviour
     /// Момент времени, начиная с которого можно выстрелятить снова.
     /// </summary>
     private float _nextFireTime;
+
+    /// <summary>
+    /// Текущее смещение спрайта от отдачи. Плавно возвращается к нулю.
+    /// </summary>
+    private Vector2 _recoilOffset;
 
     /// <summary>
     /// Момент последнего нажатия ЛКМ (для буферизации).
@@ -151,6 +178,23 @@ public class GuitarWeapon : MonoBehaviour
         if(_shotSound != null)
             _shotSound.Play();
 
-        // Сюда позже ляжет game feel: отдача, вспышка, гильза-медиатор.
+        // Толкаем спрайт назад — против направления выстрела.
+        _recoilOffset = - _playerAim.AimDirection * _recoilDistance;
+
+        // Сюда позже ляжет game feel: вспышка, гильза-медиатор.
+    }
+
+    /// <summary>
+    /// Плавное возвращение спрайта игрока в исходное положение после визуальной отдачи.
+    /// Вызывается в LateUpdate, чтобы смещать уже позиционированный объект.
+    /// </summary>
+    private void LateUpdate()
+    {
+        if(_visual == null)
+            return;
+
+        var speed = _recoilDistance / _recoilRecovery;
+        _recoilOffset = Vector2.MoveTowards(_recoilOffset, Vector2.zero, speed * Time.deltaTime);
+        _visual.localPosition = _recoilOffset;
     }
 }
