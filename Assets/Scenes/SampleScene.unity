@@ -877,11 +877,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomSound
   _clips:
-  - {fileID: 8300000, guid: 9b118614ac5a2684e98ee539ec625e92, type: 3}
-  - {fileID: 8300000, guid: 0331a1e20945cde4b9693200ad22aed8, type: 3}
-  - {fileID: 8300000, guid: ccc0856b968877241bef7b3724665e88, type: 3}
-  - {fileID: 8300000, guid: 2c7e6f542cd83bd468f29e0d91418217, type: 3}
-  - {fileID: 8300000, guid: fae0374b5f9d684408b9d97e514444cb, type: 3}
+  - {fileID: 8300000, guid: 74e0e7e653f24ab4d9c9c3b75fb102f7, type: 3}
+  - {fileID: 8300000, guid: 74e0e7e653f24ab4d9c9c3b75fb102f7, type: 3}
+  - {fileID: 8300000, guid: 74e0e7e653f24ab4d9c9c3b75fb102f7, type: 3}
+  - {fileID: 8300000, guid: 74e0e7e653f24ab4d9c9c3b75fb102f7, type: 3}
+  - {fileID: 8300000, guid: 74e0e7e653f24ab4d9c9c3b75fb102f7, type: 3}
   _pitchVariance: 0.03
 --- !u!82 &474638485
 AudioSource:
