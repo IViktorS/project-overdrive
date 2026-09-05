@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Класс манекена (цели), который может получать урон.
 /// </summary>
-public class Dummy : MonoBehaviour
+public class Dummy : MonoBehaviour, IDamageable
 {
     /// <summary>
     /// Максимальное количество здоровья.

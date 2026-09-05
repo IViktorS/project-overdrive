@@ -19,8 +19,20 @@ public class TimeController : MonoBehaviour
     private Coroutine _coroutine;
 
     /// <summary>
+    /// Масштаб времени, к которому нужно вернуться после хитстопа.
+    /// Запоминается перед заморозкой, а не хардкодится единицей: иначе хитстоп
+    /// молча отменил бы паузу или замедление, если они появятся.
+    /// </summary>
+    private float _normalTimeScale = 1f;
+
+    /// <summary>
     /// Инициализирует синглтон, уничтожая дубликаты.
     /// </summary>
+    /// <remarks>
+    /// <see cref="DontDestroyOnLoad"/> нужен, потому что по дизайн-документу игра
+    /// состоит из комнат: при их загрузке обычный объект сцены был бы уничтожен,
+    /// и хитстоп перестал бы работать после первого же перехода.
+    /// </remarks>
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -28,7 +40,24 @@ public class TimeController : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    /// <summary>
+    /// Снимает заморозку, если объект уничтожают прямо во время хитстопа
+    /// (например, при выходе из Play-режима). Иначе время осталось бы стоять.
+    /// </summary>
+    private void OnDestroy()
+    {
+        if (Instance != this)
+            return;
+
+        if (_coroutine != null)
+            Time.timeScale = _normalTimeScale;
+
+        Instance = null;
     }
 
     /// <summary>
@@ -37,11 +66,20 @@ public class TimeController : MonoBehaviour
     /// <param name="seconds">Длительность заморозки в реальном времени (напр. 0.04 = 40 мс).</param>
     public void HitStop(float seconds)
     {
-        // Если уже есть активный хитстоп, останавливаем его.
-        if (_coroutine != null)
-            StopCoroutine(_coroutine);
+        if (seconds <= 0f)
+            return;
 
-        // Запускаем новый хитстоп.
+        if (_coroutine != null)
+        {
+            // Уже в хитстопе: гасим старую корутину, но НЕ перезаписываем
+            // _normalTimeScale — сейчас там ноль, и мы бы застряли в заморозке навсегда.
+            StopCoroutine(_coroutine);
+        }
+        else
+        {
+            _normalTimeScale = Time.timeScale;
+        }
+
         _coroutine = StartCoroutine(HitStopCoroutine(seconds));
     }
 
@@ -61,7 +99,7 @@ public class TimeController : MonoBehaviour
         // Не зависимо от Time.timeScale, поэтому используем WaitForSecondsRealtime.
         yield return new WaitForSecondsRealtime(seconds);
 
-        Time.timeScale = 1f;
+        Time.timeScale = _normalTimeScale;
         _coroutine = null;
     }
 }

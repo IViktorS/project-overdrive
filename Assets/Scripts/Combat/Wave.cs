@@ -88,8 +88,8 @@ public class Wave : MonoBehaviour
     /// <param name="other">Коллайдер объекта, с которым столкнулась волна.</param>
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Игнорируем столкновение, если это не манекен (Dummy).
-        if (!other.TryGetComponent<Dummy>(out var dummy))
+        // Игнорируем всё, что не умеет получать урон (стены, декор, сам игрок).
+        if (!other.TryGetComponent<IDamageable>(out var target))
             return;
 
         var damage = _stats.damage;
@@ -99,7 +99,7 @@ public class Wave : MonoBehaviour
         for (int i = 0; i < _pierced; i++)
             damage *= 1f - _stats.pierceFalloff;
 
-        dummy.TakeHit(damage, _direction);
+        target.TakeHit(damage, _direction);
 
         _pierced++;
 
