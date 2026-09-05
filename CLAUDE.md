@@ -56,10 +56,29 @@
 - Пакет: `https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main`
   (Unity → Package Manager → Add package from git URL).
 - Настройка клиентов: `Window → MCP for Unity → Configure All Detected Clients`.
-- Требует Python 3.10+ через `uv`. **Уже установлено** на рабочей машине:
-  `uv 0.12.10` + CPython 3.12.14, путь `~/.local/bin` прописан в PATH пользователя.
-- На новой машине: поставить `uv` (`irm https://astral.sh/uv/install.ps1 | iex`),
-  затем пакет в Unity — и повторить авто-настройку клиентов.
+- Требует Python 3.10+ и `uv`. На рабочей машине стоит: `uv 0.12.10` +
+  **Python 3.12.10 с python.org** (`winget install Python.Python.3.12 --scope user`).
+
+**Три грабли, на которые уже наступили (сентябрь 2026) — на новой машине не повторять:**
+
+1. **Python ставить НЕ через `uv python install`.** uv кладёт интерпретатор в свою
+   служебную папку и делает шимы через симлинк, который Windows без Developer Mode
+   не разыменовывает → `uv trampoline failed to spawn Python child process`, а пакет
+   пишет «Python Not Found in PATH». Нужен обычный Python в PATH (winget/python.org).
+   `uv` при этом всё равно нужен — им запускается сам MCP-сервер.
+2. **Transport обязательно `Stdio`, не `HTTP Local`.** Клиент (Claude Desktop)
+   подключается по stdio и ищет редактор сканированием TCP-портов. При `HTTP Local`
+   Unity не поднимает мост, и сервер вечно пишет `Discovered 0 Unity instances`.
+   Правильное состояние — в Console: `StdioBridgeHost started on port 6400`.
+3. **Ошибка `Configuration failed: Claude CLI not found` — безобидная, игнорировать.**
+   Пакет настраивает «Claude Code» через консольную утилиту `claude` (её в PATH нет),
+   но «Claude Desktop» он настраивает правкой файла — и это срабатывает. Рабочий
+   конфиг лежит в `%APPDATA%\Claude\claude_desktop_config.json`, сервер `unityMCP`
+   запускается через `uvx --from mcpforunityserver --transport stdio`.
+
+Диагностика, если связи нет: лог сервера `%LOCALAPPDATA%\UnityMCP\Logs\unity_mcp_server.log`,
+лог редактора — `<проект>/Logs/Editor.log` (НЕ `%LOCALAPPDATA%\Unity\Editor\Editor.log`,
+Unity переносит его в папку проекта).
 
 ## Текущее состояние (этап 1 по плану дока: комната, игрок, манекены)
 
