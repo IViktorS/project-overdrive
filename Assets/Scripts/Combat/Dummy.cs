@@ -55,7 +55,7 @@ public class Dummy : MonoBehaviour
     /// <summary>
     /// Текущая запущенная корутина вспышки.
     /// </summary>
-    private Coroutine _flashCoroutone;
+    private Coroutine _flashCoroutine;
 
     /// <summary>
     /// Инициализация компонентов манекена до запуска игры.
@@ -99,10 +99,10 @@ public class Dummy : MonoBehaviour
         if (_spriteRenderer == null)
             return;
 
-        if(_flashCoroutone != null)
-            StopCoroutine(_flashCoroutone);
+        if(_flashCoroutine != null)
+            StopCoroutine(_flashCoroutine);
 
-        _flashCoroutone = StartCoroutine(FlashCoroutine());
+        _flashCoroutine = StartCoroutine(FlashCoroutine());
     }
 
     /// <summary>
@@ -116,6 +116,6 @@ public class Dummy : MonoBehaviour
         yield return new WaitForSecondsRealtime(_flashDuration);
 
         _spriteRenderer.color = _baseColor;
-        _flashCoroutone = null;
+        _flashCoroutine = null;
     }
 }

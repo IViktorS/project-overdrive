@@ -33,10 +33,9 @@ public class PlayerAim : MonoBehaviour
     /// <summary>
     /// Инициализация начальных компонентов. Присваивает Камеру, если она не задана.
     /// </summary>
-    public void Awake()
+    private void Awake()
     {
-        if(_camera == null)
-            _camera = Camera.main;
+        _camera = Camera.main;
     }
 
     /// <summary>

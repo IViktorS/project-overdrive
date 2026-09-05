@@ -1,0 +1,78 @@
+# Стиль кода project-overdrive.
+# Фиксирует договорённости из CLAUDE.md, чтобы IDE (Rider / Visual Studio)
+# держала их автоматически, а не на памяти разработчика.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+# Unity-генерируемые и служебные файлы форматировать не нужно
+[*.{meta,unity,prefab,asset,inputactions}]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+[*.cs]
+indent_size = 4
+
+# --- Именование ---------------------------------------------------------
+
+# Приватные поля: _camelCase
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel_case
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+
+# Константы: UPPER_CASE
+dotnet_naming_rule.constants_upper_case.severity = warning
+dotnet_naming_rule.constants_upper_case.symbols = constants
+dotnet_naming_rule.constants_upper_case.style = all_upper
+
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.applicable_accessibilities = *
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_style.all_upper.capitalization = all_upper
+dotnet_naming_style.all_upper.word_separator = _
+
+# Публичные члены: PascalCase
+dotnet_naming_rule.public_members_pascal.severity = warning
+dotnet_naming_rule.public_members_pascal.symbols = public_members
+dotnet_naming_rule.public_members_pascal.style = pascal_case
+
+dotnet_naming_symbols.public_members.applicable_kinds = property,method,event
+dotnet_naming_symbols.public_members.applicable_accessibilities = public
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# --- Оформление ---------------------------------------------------------
+
+# Модификатор доступа указываем явно (в проекте это `private void Awake()`)
+dotnet_style_require_accessibility_modifiers = always:warning
+
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+csharp_prefer_braces = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# `this.` не используем — приватные поля и так отличаются подчёркиванием
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
