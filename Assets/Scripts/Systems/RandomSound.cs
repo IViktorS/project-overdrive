@@ -27,6 +27,12 @@ public class RandomSound : MonoBehaviour
     private AudioSource _audioSource;
 
     /// <summary>
+    /// Признак того, что об отсутствии клипов уже сообщено.
+    /// Нужен, чтобы предупреждение не повторялось на каждом вызове <see cref="Play"/>.
+    /// </summary>
+    private bool _missingClipsReported;
+
+    /// <summary>
     /// Инициализирует компонент, получая ссылку на <see cref="AudioSource"/>.
     /// </summary>
     private void Awake()
@@ -43,15 +49,34 @@ public class RandomSound : MonoBehaviour
     {
         if (_clips == null || _clips.Length == 0)
         {
-            Debug.Log($"{name}: RandomSound — клипов нет");
+            // Предупреждаем один раз: это ошибка настройки, а не событие геймплея.
+            // Логировать на каждый вызов нельзя — Play() срабатывает несколько раз в секунду.
+            if (!_missingClipsReported)
+            {
+                _missingClipsReported = true;
+                Debug.LogWarning($"{name}: RandomSound — не задан ни один клип", this);
+            }
+
             return;
-        } 
-            
+        }
 
         var clip = _clips[Random.Range(0, _clips.Length)];
+
+        // Массив может быть нужного размера, но с пустыми слотами — так уже случалось
+        // со звуками попадания, и Unity молча сыпал "PlayOneShot was called with a
+        // null AudioClip", а звук просто не играл.
+        if (clip == null)
+        {
+            if (!_missingClipsReported)
+            {
+                _missingClipsReported = true;
+                Debug.LogWarning($"{name}: RandomSound — в массиве клипов есть пустые слоты", this);
+            }
+
+            return;
+        }
+
         _audioSource.pitch = 1f + Random.Range(-_pitchVariance, _pitchVariance);
         _audioSource.PlayOneShot(clip);
-
-        Debug.Log($"{name}: играю {clip.name}");
     }
 }

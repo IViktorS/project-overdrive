@@ -1,5 +1,21 @@
+# Git LFS — бинарные ассеты, которые плохо ложатся в обычный git.
+# ВАЖНО: сюда НЕ добавлять .unity/.prefab/.asset — это текстовый YAML,
+# его нужно уметь читать в diff и мержить.
+
+# Аудио
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.mp3 filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.aif filter=lfs diff=lfs merge=lfs -text
+*.aiff filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+
+# Исходники графики (сами спрайты .png держим обычным git —
+# для пиксель-арта они мелкие, а LFS-квота не бесконечная)
 *.psd filter=lfs diff=lfs merge=lfs -text
+*.aseprite filter=lfs diff=lfs merge=lfs -text
+*.ase filter=lfs diff=lfs merge=lfs -text
+
+# 3D
 *.fbx filter=lfs diff=lfs merge=lfs -text
 *.blend filter=lfs diff=lfs merge=lfs -text

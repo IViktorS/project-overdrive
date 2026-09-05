@@ -62,6 +62,18 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Длительность неуязвимости. Обычно чуть больше dashDuration")]
     [SerializeField]
     private float _iFrameDuration = 0.18f;
+
+    /// <summary>
+    /// Окно буферизации ввода рывка, сек. Нажатие, сделанное чуть раньше готовности,
+    /// не теряется, а срабатывает сразу по окончании кулдауна.
+    /// </summary>
+    /// <remarks>
+    /// Раньше нажатие в кулдаун просто отбрасывалось, и рывок «проглатывался» —
+    /// при том, что у стрельбы буфер был. Ноль отключает буферизацию.
+    /// </remarks>
+    [Tooltip("Насколько заранее засчитывается нажатие рывка, сек (0 = без буфера)")]
+    [SerializeField]
+    private float _dashInputBuffer = 0.1f;
     #endregion
 
     /// <summary>
@@ -123,10 +135,26 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 _dashDirection;
 
     /// <summary>
-    /// Флаг проверки на неуязвимость персонажа.
-    /// Если true — урон должен игнорироваться, если false — урон наносится обычным образом.
+    /// Момент последнего нажатия кнопки рывка (для буферизации).
+    /// <see cref="float.NegativeInfinity"/> означает, что необработанного нажатия нет.
     /// </summary>
-    private bool _isInvulnerable => _iFrameTimeLeft > 0f;
+    private float _lastDashPressTime = float.NegativeInfinity;
+
+    /// <summary>
+    /// Неуязвим ли персонаж прямо сейчас (кадры неуязвимости рывка).
+    /// Если true — источники урона обязаны его проигнорировать.
+    /// </summary>
+    /// <remarks>
+    /// Публичное, потому что читать его будут снаружи: атаки врагов и вражеские
+    /// снаряды на этапе 2. Рывок по дизайн-документу — единственный инструмент
+    /// против окружения на старте, поэтому его i-frames обязаны работать.
+    /// </remarks>
+    public bool IsInvulnerable => _iFrameTimeLeft > 0f;
+
+    /// <summary>
+    /// Выполняется ли сейчас рывок. Пригодится для анимаций и эффектов.
+    /// </summary>
+    public bool IsDashing => _state == State.Dashing;
 
     /// <summary>
     /// Инициализация компонентов при загрузке скрипта.
@@ -192,6 +220,10 @@ public class PlayerMovement : MonoBehaviour
         if(_iFrameTimeLeft > 0f)
             _iFrameTimeLeft -= deltaTime;
 
+        // Проверяем после списания таймеров: рывок, буферизованный на время кулдауна,
+        // должен сработать в тот же кадр, когда кулдаун истёк.
+        TryStartBufferedDash();
+
         switch (_state)
         {
             case State.Normal:
@@ -222,9 +254,22 @@ public class PlayerMovement : MonoBehaviour
     /// <param name="context">Контекст события пользовательского ввода.</param>
     private void OnDashPressed(InputAction.CallbackContext context)
     {
-        // Нельзя сделать еще один рывок во время текущего рывка или до окончания перезарядки
+        // Только запоминаем момент нажатия. Решение о рывке принимается в FixedUpdate,
+        // чтобы нажатие, сделанное во время кулдауна, не пропадало, а дождалось готовности.
+        _lastDashPressTime = Time.time;
+    }
+
+    /// <summary>
+    /// Пытается начать рывок, если есть непросроченное нажатие и рывок готов.
+    /// </summary>
+    private void TryStartBufferedDash()
+    {
+        // Нельзя рвануть во время текущего рывка или до окончания перезарядки.
         if (_state != State.Normal || _dashCooldownLeft > 0f)
-            return; 
+            return;
+
+        if (Time.time - _lastDashPressTime > _dashInputBuffer)
+            return;
 
         StartDash();
     }
@@ -236,6 +281,7 @@ public class PlayerMovement : MonoBehaviour
     {
         // Направление задается по текущему вводу. Если ввода нет (игрок стоит) — по направлению последнего шага.
         _dashDirection = (_moveInput.sqrMagnitude > 0.01f) ? _moveInput : _lastMoveDirection;
+        _lastDashPressTime = float.NegativeInfinity; // буфер израсходован
         _state = State.Dashing;
         _dashTimeLeft = _dashDuration;
         _dashCooldownLeft = _dashCooldown;

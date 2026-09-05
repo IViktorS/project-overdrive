@@ -49,6 +49,28 @@ public class Wave : MonoBehaviour
     private Rigidbody2D _rigidbody;
 
     /// <summary>
+    /// Коллайдер-хитбокс волны.
+    /// </summary>
+    private BoxCollider2D _collider;
+
+    /// <summary>
+    /// Была ли волна инициализирована через <see cref="Initialization"/>.
+    /// Без этого до неё нельзя двигаться и наносить урон.
+    /// </summary>
+    private bool _isInitialized;
+
+    /// <summary>
+    /// Кэширует компоненты. Раньше это делалось в <see cref="Initialization"/>,
+    /// из-за чего волна, помещённая в сцену вручную (или забытый вызов
+    /// инициализации), падала с NullReferenceException в <see cref="FixedUpdate"/>.
+    /// </summary>
+    private void Awake()
+    {
+        _rigidbody = GetComponent<Rigidbody2D>();
+        _collider = GetComponent<BoxCollider2D>();
+    }
+
+    /// <summary>
     /// Инициализация параметров волны.
     /// </summary>
     /// <param name="stats">Характеристики волны.</param>
@@ -59,14 +81,13 @@ public class Wave : MonoBehaviour
         _direction = direction.normalized;
         transform.right = _direction;
 
-        _rigidbody = GetComponent<Rigidbody2D>();
-
-        var box = GetComponent<BoxCollider2D>();
-        box.isTrigger = true;
-        box.size = new Vector2(FRONT_DEPTH, _stats.visualWidth * HITBOX_GENEROSITY);
+        _collider.isTrigger = true;
+        _collider.size = new Vector2(FRONT_DEPTH, _stats.visualWidth * HITBOX_GENEROSITY);
 
         if (_visual != null)
             _visual.localScale = new Vector3(FRONT_DEPTH, _stats.visualWidth, 1f);
+
+        _isInitialized = true;
     }
 
     /// <summary>
@@ -74,6 +95,9 @@ public class Wave : MonoBehaviour
     /// </summary>
     private void FixedUpdate()
     {
+        if (!_isInitialized)
+            return;
+
         var step = _stats.speed * Time.fixedDeltaTime;
         _rigidbody.MovePosition(_rigidbody.position + _direction * step);
         _traveled += step;
@@ -88,8 +112,11 @@ public class Wave : MonoBehaviour
     /// <param name="other">Коллайдер объекта, с которым столкнулась волна.</param>
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Игнорируем столкновение, если это не манекен (Dummy).
-        if (!other.TryGetComponent<Dummy>(out var dummy))
+        if (!_isInitialized)
+            return;
+
+        // Игнорируем всё, что не умеет получать урон (стены, декор, сам игрок).
+        if (!other.TryGetComponent<IDamageable>(out var target))
             return;
 
         var damage = _stats.damage;
@@ -99,7 +126,7 @@ public class Wave : MonoBehaviour
         for (int i = 0; i < _pierced; i++)
             damage *= 1f - _stats.pierceFalloff;
 
-        dummy.TakeHit(damage, _direction);
+        target.TakeHit(damage, _direction);
 
         _pierced++;
 

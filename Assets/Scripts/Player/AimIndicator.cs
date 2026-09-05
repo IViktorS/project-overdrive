@@ -19,10 +19,24 @@ public class AimIndicator : MonoBehaviour
     private Transform _indicator;
 
     /// <summary>
+    /// Проверяет, что обязательные ссылки заданы. Без этого компонент падал бы
+    /// с NullReferenceException каждый кадр, что маскирует настоящую причину —
+    /// незаполненное поле в инспекторе.
+    /// </summary>
+    private void Awake()
+    {
+        if (_playerAim == null || _indicator == null)
+        {
+            Debug.LogWarning($"{name}: AimIndicator — не заданы PlayerAim и/или Indicator, компонент отключён", this);
+            enabled = false;
+        }
+    }
+
+    /// <summary>
     /// Вызывается каждый кадр.
     /// Обновляет поворот индикатора в соответствии с текущим направлением прицела.
     /// </summary>
-    void Update()
+    private void Update()
     {
         Vector2 direction = _playerAim.AimDirection;
 
