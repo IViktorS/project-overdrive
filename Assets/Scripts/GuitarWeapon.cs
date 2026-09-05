@@ -82,6 +82,22 @@ public class GuitarWeapon : MonoBehaviour
     [Tooltip("Скорость возврата спрайта игрока в исходное положение, сек")]
     [SerializeField]
     private float _recoilRecovery = 0.08f;
+
+    /// <summary>
+    /// Камера, получающая толчок при выстреле. Пусто = толчка нет.
+    /// </summary>
+    [Tooltip("Камера, получающая толчок при выстреле. Пусто = без толчка")]
+    [SerializeField]
+    private CameraRig _cameraRig;
+
+    /// <summary>
+    /// Сила толчка камеры при выстреле, юниты. Держать МАЛЕНЬКОЙ: при темпе
+    /// ~4 выстрела/сек заметный толчок превращается в постоянную тряску
+    /// и мешает читать телеграфы атак врага.
+    /// </summary>
+    [Tooltip("Сила толчка камеры при выстреле, юниты (держать маленькой)")]
+    [SerializeField]
+    private float _cameraBumpStrength = 0.12f;
     #endregion
 
     /// <summary>
@@ -180,6 +196,10 @@ public class GuitarWeapon : MonoBehaviour
 
         // Толкаем спрайт назад — против направления выстрела.
         _recoilOffset = - _playerAim.AimDirection * _recoilDistance;
+
+        // Толчок камеры туда же, куда уходит отдача — против выстрела.
+        if (_cameraRig != null)
+            _cameraRig.Bump(-_playerAim.AimDirection, _cameraBumpStrength);
 
         // Сюда позже ляжет game feel: вспышка, гильза-медиатор.
     }
