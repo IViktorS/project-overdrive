@@ -8,6 +8,18 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class GuitarWeapon : MonoBehaviour
 {
+    /// <summary>
+    /// Способ ведения огня.
+    /// </summary>
+    public enum FireMode
+    {
+        /// <summary>Один клик — один выстрел. Удержание ЛКМ ничего не даёт.</summary>
+        Click,
+
+        /// <summary>Удержание ЛКМ ведёт непрерывный огонь с темпом кулдауна.</summary>
+        Hold
+    }
+
     #region Настройки, отображаемые в инспекторе Unity
     /// <summary>
     /// Префаб волны, создаваемый при выстреле.
@@ -54,6 +66,21 @@ public class GuitarWeapon : MonoBehaviour
     [Tooltip("Насколько заранее засчитывается клик (сек)")]
     [SerializeField]
     private float _inputBuffer = 0.1f;
+
+    /// <summary>
+    /// Способ ведения огня. Отладочная настройка: переключается прямо в Play-режиме,
+    /// чтобы сравнить ощущения и выбрать окончательный вариант.
+    /// </summary>
+    /// <remarks>
+    /// Дизайн-документ описывает выстрел как «удар по струнам» — это довод за
+    /// <see cref="FireMode.Click"/>. Но жанр (Isaac, Gungeon) приучил игроков
+    /// держать кнопку, а док же упоминает, что «спам расшатывает кучность»,
+    /// подразумевая возможность частой стрельбы. Решается только плейтестом.
+    /// </remarks>
+    [Header("Отладка / эксперимент")]
+    [Tooltip("Click = один клик один выстрел; Hold = удержание даёт автоогонь с тем же темпом")]
+    [SerializeField]
+    private FireMode _fireMode = FireMode.Click;
 
     /// <summary>
     /// Звуковой эффект выстрела. Воспроизводится случайный звук из набора.
@@ -117,9 +144,9 @@ public class GuitarWeapon : MonoBehaviour
 
     /// <summary>
     /// Момент последнего нажатия ЛКМ (для буферизации).
-    /// Большое отрицательное значение означает, что необработанного нажатия нет.
+    /// <see cref="float.NegativeInfinity"/> означает, что необработанного нажатия нет.
     /// </summary>
-    private float _lastPressTime = -999f;
+    private float _lastPressTime = float.NegativeInfinity;
 
     /// <summary>
     /// Инициализация компонентов при загрузке скрипта.
@@ -170,11 +197,28 @@ public class GuitarWeapon : MonoBehaviour
         if (Time.time < _nextFireTime)
             return;
 
-        // Нет клика в пределах окна буферизации (или он уже израсходован).
-        if (Time.time - _lastPressTime > _inputBuffer)
+        if (!WantsToFire())
             return;
 
         Fire();
+    }
+
+    /// <summary>
+    /// Есть ли сейчас намерение выстрелить, с учётом выбранного <see cref="FireMode"/>.
+    /// </summary>
+    /// <remarks>
+    /// Буфер ввода работает в обоих режимах: клик, сделанный чуть раньше окончания
+    /// кулдауна, не теряется, а срабатывает сразу по его истечении. Без этого
+    /// ритмичная стрельба «в темп» ощущается как проглатывание нажатий.
+    /// </remarks>
+    private bool WantsToFire()
+    {
+        // Нажатие, попавшее в окно буферизации, засчитывается в любом режиме.
+        if (Time.time - _lastPressTime <= _inputBuffer)
+            return true;
+
+        // В режиме удержания продолжаем стрелять, пока кнопка зажата.
+        return _fireMode == FireMode.Hold && _controls.Player.Attack.IsPressed();
     }
 
     /// <summary>
@@ -189,7 +233,7 @@ public class GuitarWeapon : MonoBehaviour
         wave.Initialization(waveStats, _playerAim.AimDirection);
 
         _nextFireTime = Time.time + _fireCooldown;
-        _lastPressTime = -999f; // сброс буфера
+        _lastPressTime = float.NegativeInfinity; // буфер израсходован
 
         if(_shotSound != null)
             _shotSound.Play();
